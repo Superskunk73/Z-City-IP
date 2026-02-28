@@ -155,6 +155,7 @@ function zb:EndRoundThink()
 			zb.SHOULD_FADE = true
 
 			hook.Run("ZB_PreRoundStart")
+			hook.Run("TTTPrepareRound") -- stormfox2 random_round_weather
 
 			zb.CROUND = zb.nextround or "hmcd"
 			if CurrentRound().shouldfreeze then zb:Freeze() end
@@ -579,7 +580,6 @@ function zb:RoundStart()
 	zb.START_TIME = nil
 
 	local mode, round = CurrentRound()
-	
 
 	VFIRE_DISABLED = (mode.name == "coop")
 
