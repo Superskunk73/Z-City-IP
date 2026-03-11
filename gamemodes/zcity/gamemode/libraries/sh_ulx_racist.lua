@@ -11,33 +11,84 @@ if SERVER then
     local STORAGE_FILE = "zcity_ulx_racist_list.json"
     local RacistSteamIDs = {}
 
+    local function MakeStorageKey(steamID64)
+        if not steamID64 or steamID64 == "" then return nil end
+        return "sid64:" .. tostring(steamID64)
+    end
+
+    local function MakeStorageKeySteamID(steamID)
+        if not steamID or steamID == "" or steamID == "BOT" then return nil end
+        return "sid:" .. tostring(steamID)
+    end
+
+    local function BuildStorageList()
+        local out = {}
+
+        for key in pairs(RacistSteamIDs) do
+            out[#out + 1] = key
+        end
+
+        table.sort(out)
+        return out
+    end
+
     local function LoadRacistStorage()
+        RacistSteamIDs = {}
+
         if not file.Exists(STORAGE_FILE, "DATA") then
-            RacistSteamIDs = {}
             return
         end
 
         local raw = file.Read(STORAGE_FILE, "DATA")
         local decoded = util.JSONToTable(raw or "")
+        if not istable(decoded) then
+            return
+        end
 
-        if istable(decoded) then
-            RacistSteamIDs = decoded
-        else
-            RacistSteamIDs = {}
+        if #decoded > 0 then
+            for _, key in ipairs(decoded) do
+                if isstring(key) and key ~= "" then
+                    RacistSteamIDs[key] = true
+                end
+            end
+            return
+        end
+
+        for key, enabled in pairs(decoded) do
+            if enabled then
+                local keyString = tostring(key or "")
+
+                if keyString ~= "" then
+                    if string.StartWith(keyString, "sid64:") then
+                        RacistSteamIDs[keyString] = true
+                    else
+                        RacistSteamIDs["sid64:" .. keyString] = true
+                    end
+                end
+            end
         end
     end
 
     local function SaveRacistStorage()
-        file.Write(STORAGE_FILE, util.TableToJSON(RacistSteamIDs, true))
+        file.Write(STORAGE_FILE, util.TableToJSON(BuildStorageList(), true))
     end
 
-    local function GetTargetSteamID64(target_ply)
-        if not IsValidTarget(target_ply) then return nil end
+    local function GetTargetStorageKeys(target_ply)
+        if not IsValidTarget(target_ply) then return {} end
 
-        local steamID64 = target_ply:SteamID64()
-        if not steamID64 or steamID64 == "" then return nil end
+        local keys = {}
+        local steamID = MakeStorageKeySteamID(target_ply:SteamID())
+        local steamID64 = MakeStorageKey(target_ply:SteamID64())
 
-        return steamID64
+        if steamID then
+            keys[#keys + 1] = steamID
+        end
+
+        if steamID64 and steamID64 ~= steamID then
+            keys[#keys + 1] = steamID64
+        end
+
+        return keys
     end
 
     local function IsRacist(target_ply)
@@ -56,9 +107,11 @@ if SERVER then
 
         target_ply:SetNWBool(RACIST_NETVAR, state)
 
-        local steamID64 = GetTargetSteamID64(target_ply)
-        if steamID64 then
-            RacistSteamIDs[steamID64] = state and true or nil
+        local storageKeys = GetTargetStorageKeys(target_ply)
+        if #storageKeys > 0 then
+            for _, storageKey in ipairs(storageKeys) do
+                RacistSteamIDs[storageKey] = state and true or nil
+            end
             SaveRacistStorage()
         end
 
@@ -104,11 +157,14 @@ if SERVER then
     unracist:help("Removes ulx racist restrictions from a player.")
 
     hook.Add("PlayerInitialSpawn", "ZB_ULXRacist_ApplyPersistentState", function(ply)
-        local steamID64 = GetTargetSteamID64(ply)
-        if not steamID64 then return end
+        local storageKeys = GetTargetStorageKeys(ply)
+        if #storageKeys == 0 then return end
 
-        if RacistSteamIDs[steamID64] then
-            ply:SetNWBool(RACIST_NETVAR, true)
+        for _, storageKey in ipairs(storageKeys) do
+            if RacistSteamIDs[storageKey] then
+                ply:SetNWBool(RACIST_NETVAR, true)
+                break
+            end
         end
     end)
 
