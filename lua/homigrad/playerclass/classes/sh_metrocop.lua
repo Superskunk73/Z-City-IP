@@ -77,6 +77,10 @@ local rebels = {
 function CLASS.Off(self)
     if CLIENT then return end
 
+	if eightbit and eightbit.EnableEffect and self.UserID then
+		eightbit.EnableEffect(self:UserID(), 0)
+	end
+
     for k,v in ipairs(ents.FindByClass("npc_*")) do
         if table.HasValue(combines,v:GetClass()) then
             v:AddEntityRelationship( self, D_HT, 99 )
@@ -97,6 +101,8 @@ CLASS.CanEmitRNDSound = false
 
 local function giveSubClassLoadout(ply, subclass)
     local config = combine_subclasses[subclass] or combine_subclasses["default"]
+    ply:StripWeapons()
+    ply:Give("weapon_hands_sh")
     for _, item in ipairs(config.loadout or {}) do
         if item.weapon_random_pool then
             local randWep = item.weapon_random_pool[math.random(#item.weapon_random_pool)]
@@ -106,7 +112,7 @@ local function giveSubClassLoadout(ply, subclass)
             end
         else
             local wep = ply:Give(item.weapon)
-            if wep then
+            if IsValid(wep) then
                 --;; патрончики
                 if item.ammo_mult then
                     ply:GiveAmmo(wep:GetMaxClip1() * item.ammo_mult, wep:GetPrimaryAmmoType(), true)
@@ -125,6 +131,15 @@ end
 
 function CLASS.On(self, data)
     if CLIENT then return end
+
+	if eightbit and eightbit.EnableEffect and self.UserID then
+		eightbit.EnableEffect(self:UserID(), eightbit.EFF_PROOT) --!! placeholder
+	end
+
+    if IsValid(self.FakeRagdoll) then
+        hg.FakeUp(self, nil, nil, true)
+    end
+
     ApplyAppearance(self,nil,nil,nil,true)
     local Appearance = self.CurAppearance or hg.Appearance.GetRandomAppearance()
     Appearance.AAttachments = ""

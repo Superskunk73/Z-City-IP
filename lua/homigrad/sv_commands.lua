@@ -109,22 +109,30 @@ COMMANDS.help = {function(ply,args)
 	ply:ChatPrint(text)
 end,0}
 
-if SERVER then
-    util.AddNetworkString("PunishLightningEffect")
+if not SERVER then return end
+
+util.AddNetworkString("PunishLightningEffect")
     util.AddNetworkString("AnotherLightningEffect")
     util.AddNetworkString("PluvCommand")
 
-    COMMANDS.god = {function(ply)
+    COMMANDS.zc_god = {function(ply)
         if not ply.organism then return end
         
-        ply.organism.godmode = true
-    end,2}
+        ply.organism.godmode = !ply.organism.godmode
+		ply:Notify(ply.organism.godmode and "now i'm immortal..." or "now i'm mortal")
+		return
+    end,1}
 
-    COMMANDS.ungod = {function(ply)
+	COMMANDS.zc_cloak = {function(ply)
         if not ply.organism then return end
-        
-        ply.organism.godmode = nil
-    end,2}
+		ply.cloak = !ply.cloak
+        ply:SetMaterial(ply.cloak and "NULL" or nil)
+		ply:DrawShadow(!ply.cloak)
+		ply:SetCollisionGroup(ply.cloak and COLLISION_GROUP_DEBRIS or COLLISION_GROUP_PLAYER)
+		ply:RemoveAllDecals()
+		ply:Notify(ply.cloak and "now i'm invisible..." or "now i'm visible") -- walking by the wall
+		return
+    end,1}
 
     COMMANDS.punish = {function(ply, args)
         if #args < 1 then
@@ -223,4 +231,32 @@ if SERVER then
 			end
 		end
 	end, 0}
-end
+
+	concommand.Add("zb_print_players", function(ply)
+		if IsValid(ply) and not ply:IsAdmin() then
+			ply:ChatPrint("You do not have access to this command.")
+			return
+		end
+
+		local output = {"=== Players (appearance name -> steam name) ==="}
+
+		for _, target in ipairs(player.GetAll()) do
+			local appearanceName = target:GetNWString("PlayerName", "")
+			if appearanceName == "" and target.CurAppearance then
+				appearanceName = target.CurAppearance.AName or ""
+			end
+			if appearanceName == "" then appearanceName = "<no appearance name>" end
+
+			output[#output + 1] = string.format("%s -> %s (%s)", appearanceName, target:Name(), target:SteamID())
+		end
+
+		if IsValid(ply) then
+			for _, line in ipairs(output) do
+				ply:PrintMessage(HUD_PRINTCONSOLE, line)
+			end
+			ply:ChatPrint("Printed player appearance names and Steam names to your console.")
+			return
+		end
+
+		print(table.concat(output, "\n"))
+	end)
