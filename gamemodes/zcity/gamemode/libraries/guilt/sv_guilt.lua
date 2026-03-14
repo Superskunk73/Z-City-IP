@@ -178,6 +178,9 @@ hook.Add("HomigradDamage", "GuiltReg", function(ply, dmgInfo, hitgroup, ent, har
     Victim = hg.GetCurrentCharacter(Victim) or Victim
     Victim = hg.RagdollOwner(Victim) or Victim
 
+    zb.HarmDoneKarma[Victim] = zb.HarmDoneKarma[Victim] or {}
+    zb.HarmDoneKarma[Victim][Attacker] = zb.HarmDoneKarma[Victim][Attacker] or 0
+
     local rnd, cround = CurrentRound()
     
     if rnd.GuiltDisabled or GetConVar("zb_dev"):GetBool() then return end
@@ -232,11 +235,12 @@ hook.Add("HomigradDamage", "GuiltReg", function(ply, dmgInfo, hitgroup, ent, har
     zb.HarmDoneKarma[Victim][Attacker] = zb.HarmDoneKarma[Victim][Attacker] + add
 
     if shouldBanGuilt and Attacker.Guilt >= 100 then
-		-- if ULib then
-        	ULib.addBan( Attacker:SteamID(), 30, "Kicked and banned for dealing too much team damage.", Attacker:Name(), "System" )
-		-- else
-		-- 	Attacker:Ban(30, true)
-		-- end
+        if ULib and ULib.addBan then
+            ULib.addBan(Attacker:SteamID(), 30, "Kicked and banned for dealing too much team damage.", Attacker:Name(), "System")
+        else
+            Attacker:Ban(30, true)
+            Attacker:Kick("Kicked and banned for dealing too much team damage.")
+        end
 
         PrintMessage(HUD_PRINTTALK, "Player "..Attacker:Name().." has been banned for 30 minutes for RDMing in a team based gamemode.")
     end
@@ -261,12 +265,15 @@ hook.Add("HomigradDamage", "GuiltReg", function(ply, dmgInfo, hitgroup, ent, har
 
             local time = math.Round(60 - karma * 4, 0)
 
-			-- if ULib then
-				ULib.addBan( steamID, 60, "Kicked and banned for having too low karma.", name, "System" )
-			-- else
-			-- 	Attacker:Ban(60, true)
-			-- end
-            
+            if ULib and ULib.addBan then
+                ULib.addBan(steamID, 60, "Kicked and banned for having too low karma.", name, "System")
+            else
+                if IsValid(Attacker) then
+                    Attacker:Ban(60, true)
+                    Attacker:Kick("Kicked and banned for having too low karma.")
+                end
+            end
+
             PrintMessage(HUD_PRINTTALK, "Player "..name.." has been banned for "..time.." minutes for having too low karma.")
         end)
     end
