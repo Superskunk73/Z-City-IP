@@ -1029,8 +1029,13 @@ function hg.DoTPIK(ply, ent)
                 local dist = 20--ply.segmentsl[2].Pos:Distance(ply.segmentsl[1].Pos)
                 local new = hitnormal * dist * ply.lerpedsegmenthit * (math.sin(math.acos(hitnormal:Dot(tr.Normal)))) + segments[2].Pos
 
-                segments[2].Pos = new
-            end
+        if false and !ishgweapon(self) and ply.organism and ply.organism.rarm and ply.organism.rarm > 0.99 then
+            ply.segmentsr[3] = ply.segmentsr[3] or {Pos = hand, Len = limblength}
+            ply.segmentsr[3].Pos = LerpVector(ply.leftClicking, ply.segmentsr[3].Pos + (-vector_up * 0.8 + eyeang:Forward() * 0.4 + ent:GetVelocity() / 400) * 0.5, hand)
+        else
+            local prevRightHandPos = (ply.segmentsr[3] and ply.segmentsr[3].Pos) or hand
+            ply.segmentsr[3] = {Pos = Lerp(1 - lerp_rh, ply.last_rh and ply.last_rh:GetTranslation() or prevRightHandPos, ply_r_hand_matrix_old and ply_r_hand_matrix_old:GetTranslation() or hand), Len = 12}
+        end
 
             local newpos = hook.Run("IKPoleRightArm", ply, ent, segments[2].Pos, segments)
 
@@ -1038,9 +1043,8 @@ function hg.DoTPIK(ply, ent)
                 segments[2].Pos = newpos
             end
 
-            ply.leftClicking = LerpFT(0.05, ply.leftClicking or 0, (ishgweapon(self) and hg.KeyDown(ply, IN_ATTACK)) and 1 or 0.05)
-
-            local hand = ply_r_hand_matrix:GetTranslation()
+        segments = solve(segments, 4)
+        if not (segments and segments[1] and segments[2] and segments[3]) then return end
 
             if false and !ishgweapon(self) and ply.organism and ply.organism.rarm and ply.organism.rarm > 0.99 then
                 segments[3] = segments[3] or {Pos = hand, Len = limblength}
@@ -1175,8 +1179,13 @@ function hg.DoTPIK(ply, ent)
                 segments[2].Pos = newpos
             end
 
-            local hand = ply_l_hand_matrix:GetTranslation()
-            local add = (hand - segments[1].Pos):GetNormalized() * 5 + eyeang:Right() * -5 + eyeang:Forward() * ((ply.lerp_hand or 0) - 0.5) * 10
+        if ply.organism and ply.organism.larm and ply.organism.larm > 0.99 and ishgweapon(self) and !self.reload and ishgweapon(self) then
+            ply.segmentsl[3] = ply.segmentsl[3] or {Pos = hand, Len = limblength}
+            ply.segmentsl[3].Pos = LerpVector(!(ishgweapon(self) and self:IsPistolHoldType()) and 0.05 or 0.01, ply.segmentsl[3].Pos + (-vector_up * 0.6 + eyeang:Forward() * 0.4 + ((ishgweapon(self) and !self:IsPistolHoldType()) and eyeang:Right() * 0.7 or vector_origin) + ent:GetVelocity() / 400) * 0.5, hand)
+        else
+            local prevLeftHandPos = (ply.segmentsl[3] and ply.segmentsl[3].Pos) or hand
+            ply.segmentsl[3] = {Pos = Lerp(1 - lerp_lh, ply.last_lh and ply.last_lh:GetTranslation() or prevLeftHandPos, ply_l_hand_matrix_old and ply_l_hand_matrix_old:GetTranslation() or hand), Len = 12}
+        end
 
             if ply.organism and ply.organism.larm and ply.organism.larm > 0.99 and ishgweapon(self) and !self.reload and ishgweapon(self) then
                 segments[3] = segments[3] or {Pos = hand, Len = limblength}
@@ -1191,7 +1200,8 @@ function hg.DoTPIK(ply, ent)
                 end
             end
 
-            segments = solve(segments, 4)
+        segments = solve(segments, 4)
+        if not (segments and segments[1] and segments[2] and segments[3]) then return end
 
             --[[if lply:IsSuperAdmin() then
                 for i = 2, #segments do

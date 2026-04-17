@@ -114,24 +114,17 @@ if SERVER then
     util.AddNetworkString("AnotherLightningEffect")
     util.AddNetworkString("PluvCommand")
 
-    COMMANDS.zc_god = {function(ply)
+    COMMANDS.god = {function(ply)
         if not ply.organism then return end
         
-        ply.organism.godmode = !ply.organism.godmode
-		ply:Notify(ply.organism.godmode and "now i'm immortal..." or "now i'm mortal")
-		return
-    end,1}
+        ply.organism.godmode = true
+    end,2}
 
-	COMMANDS.zc_cloak = {function(ply)
+    COMMANDS.ungod = {function(ply)
         if not ply.organism then return end
-		ply.cloak = !ply.cloak
-        ply:SetMaterial(ply.cloak and "NULL" or nil)
-		ply:DrawShadow(!ply.cloak)
-		ply:SetCollisionGroup(ply.cloak and COLLISION_GROUP_DEBRIS or COLLISION_GROUP_PLAYER)
-		ply:RemoveAllDecals()
-		ply:Notify(ply.cloak and "now i'm invisible..." or "now i'm visible") -- walking by the wall
-		return
-    end,1}
+        
+        ply.organism.godmode = nil
+    end,2}
 
     COMMANDS.punish = {function(ply, args)
         if #args < 1 then
@@ -231,30 +224,33 @@ if SERVER then
 			end
 		end
 	end, 0}
-
-	--// Aliases
-	COMMANDS.model = COMMANDS.setmodel
-	COMMANDS.playermodel = COMMANDS.setmodel
-	COMMANDS.setplayermodel = COMMANDS.setmodel
-
-	COMMANDS.setscale = {function(ply, args)
-		if not ply:IsAdmin() then return end
-		local plya = #args > 1 and args[1] or ply:Name()
-		local scale = #args > 1 and args[2] or args[1]
-
-		for i, ply2 in pairs(player.GetListByName(plya)) do
-			if ply2:Alive() then
-				ply2:SetModelScale(scale)
-
-				ply:ChatPrint(ply2:Name().. "'s model scale set to " .. tostring(scale))
-			end
-		end
-	end, 0}
-
-	--// Aliases
-	COMMANDS.setsize = COMMANDS.setscale
-	COMMANDS.scale = COMMANDS.setscale
-	COMMANDS.size = COMMANDS.setscale
-	COMMANDS.setmodelscale = COMMANDS.setscale
-	COMMANDS.modelscale = COMMANDS.setscale
 end
+
+concommand.Add("zb_print_players", function(ply)
+		if IsValid(ply) and not ply:IsAdmin() then
+			ply:ChatPrint("You do not have access to this command.")
+			return
+		end
+
+		local output = {"=== Players (appearance name -> steam name) ==="}
+
+		for _, target in ipairs(player.GetAll()) do
+			local appearanceName = target:GetNWString("PlayerName", "")
+			if appearanceName == "" and target.CurAppearance then
+				appearanceName = target.CurAppearance.AName or ""
+			end
+			if appearanceName == "" then appearanceName = "<no appearance name>" end
+
+			output[#output + 1] = string.format("%s -> %s (%s)", appearanceName, target:Name(), target:SteamID())
+		end
+
+		if IsValid(ply) then
+			for _, line in ipairs(output) do
+				ply:PrintMessage(HUD_PRINTCONSOLE, line)
+			end
+			ply:ChatPrint("Printed player appearance names and Steam names to your console.")
+			return
+		end
+
+		print(table.concat(output, "\n"))
+	end)
