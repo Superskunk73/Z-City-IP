@@ -401,7 +401,7 @@ local playerMeta = FindMetaTable("Player")
 function playerMeta:OpenInventory(ent)
     hook.Run("ZB_InventoryOpened",self,ent)
     if not IsValid(ent) then return end
-    if ent:IsPlayer() and not IsValid(ent.FakeRagdoll) and not ent:GetNWBool("Surrendered") == true then return end
+    if ent:IsPlayer() and not IsValid(ent.FakeRagdoll) and not ent:GetNWBool("Surrendering") == true then return end
     if ent:IsPlayer() then hg.RenewInv(ent) end
     if self:IsPlayer() then hg.RenewInv(self) end
     self.cooldown_takeitem = CurTime() + 0.5

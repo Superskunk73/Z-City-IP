@@ -198,7 +198,7 @@ if CLIENT then
 			if not IsValid(ent) then self:Close() return end
 			if LocalPlayer().organism.otrub or not LocalPlayer():Alive() then self:Remove() return end
 			if (ent:GetPos() - LocalPlayer():GetPos()):LengthSqr() > 125^2 then self:Remove() return end
-			if ent:IsPlayer() and not IsValid(ent.FakeRagdoll) and not ent:GetNWBool("Surrendered") == true then self:Remove() return end
+			if ent:IsPlayer() and not IsValid(ent.FakeRagdoll) and not ent:GetNWBool("Surrendering") == true then self:Remove() return end
 			if input.IsKeyDown(KEY_R) then
 				self:Close()
 			end
