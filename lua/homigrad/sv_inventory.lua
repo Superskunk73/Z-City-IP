@@ -401,7 +401,7 @@ local playerMeta = FindMetaTable("Player")
 function playerMeta:OpenInventory(ent)
     hook.Run("ZB_InventoryOpened",self,ent)
     if not IsValid(ent) then return end
-    if ent:IsPlayer() and not IsValid(ent.FakeRagdoll) and not ent:GetNWBool("Surrendering") == true then return end
+    if ent:IsPlayer() and not IsValid(ent.FakeRagdoll) and not ent:GetNWBool("Surrendering") == true and not ent:GetNWBool("Kneeling") == true then return end
     if ent:IsPlayer() then hg.RenewInv(ent) end
     if self:IsPlayer() then hg.RenewInv(self) end
     self.cooldown_takeitem = CurTime() + 0.5
@@ -435,8 +435,8 @@ hook.Add("Player Think", "loot-fellows",function(ply)
     
         if not trace then return end
         local ent = trace.Entity
-        ent = IsValid(hg.RagdollOwner(ent)) and hg.RagdollOwner(ent) or ent or ent:GetNWBool("Surrendering") == true //SURRENDERING
-        if ent:IsPlayer() and not (ent.organism and ent.organism.otrub) and unconloot:GetInt() == 1 and not ent:GetNWBool("Surrendering") == true then //CREDIT TO MELEECITY-DELICACY!
+        ent = IsValid(hg.RagdollOwner(ent)) and hg.RagdollOwner(ent) or ent or ent:GetNWBool("Surrendering") == true or ent:GetNWBool("Kneeling") == true //SURRENDERING
+        if ent:IsPlayer() and not (ent.organism and ent.organism.otrub) and unconloot:GetInt() == 1 and not ent:GetNWBool("Surrendering") == true and not ent:GetNWBool("Kneeling") == true then //CREDIT TO MELEECITY-DELICACY!
             if not ply.keypressed then ply:ChatPrint("I cant loot them.") end
             ply.keypressed = true
             return
