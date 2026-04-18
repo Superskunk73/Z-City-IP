@@ -1,3 +1,5 @@
+local unconloot = CreateConVar("zb_unconloot", 0, FCVAR_ARCHIVE + FCVAR_REPLICATED + FCVAR_NOTIFY, "Sets if player must be knocked out to be looted.", 0, 1)
+
 local blackList = {
     ["weapon_hands_sh"] = true,
     ["weapon_zombclaws"] = true
@@ -383,7 +385,7 @@ net.Receive("ply_take_item", function(len, ply)
     local ent = net.ReadEntity()
     
     if !IsValid(ent) or !IsValid(ply) then return end
-    if ent:IsPlayer() and not IsValid(ent.FakeRagdoll) then return end
+    // if ent:IsPlayer() and not IsValid(ent.FakeRagdoll) then return end
 
     if ent:GetPos():Distance(ply:GetPos()) > 125 then return end
     local func = functions[tblIndex]
@@ -399,7 +401,7 @@ local playerMeta = FindMetaTable("Player")
 function playerMeta:OpenInventory(ent)
     hook.Run("ZB_InventoryOpened",self,ent)
     if not IsValid(ent) then return end
-    if ent:IsPlayer() and not IsValid(ent.FakeRagdoll) then return end
+    if ent:IsPlayer() and not IsValid(ent.FakeRagdoll) and not ent:GetNWBool("Surrendered") == true then return end
     if ent:IsPlayer() then hg.RenewInv(ent) end
     if self:IsPlayer() then hg.RenewInv(self) end
     self.cooldown_takeitem = CurTime() + 0.5
@@ -420,6 +422,7 @@ function playerMeta:GetLookTrace()
     return util.TraceLine(tr)
 end
 
+
 hook.Add("Player Think", "loot-fellows",function(ply)
     if not ply:Alive() then return end
     ply.keypressed = ply.keypressed or false
@@ -432,7 +435,12 @@ hook.Add("Player Think", "loot-fellows",function(ply)
     
         if not trace then return end
         local ent = trace.Entity
-        ent = IsValid(hg.RagdollOwner(ent)) and hg.RagdollOwner(ent) or ent
+        ent = IsValid(hg.RagdollOwner(ent)) and hg.RagdollOwner(ent) or ent or ent:GetNWBool("Surrendering") == true //SURRENDERING
+        if ent:IsPlayer() and not (ent.organism and ent.organism.otrub) and unconloot:GetInt() == 1 and not ent:GetNWBool("Surrendering") == true then //CREDIT TO MELEECITY-DELICACY!
+            if not ply.keypressed then ply:ChatPrint("I cant loot them.") end
+            ply.keypressed = true
+            return
+        end
 		local _ply, _ent, canloot = hook.Run("ZB_CanLootInventory", ply, ent, canloot)
 		if canloot ~= nil and canloot == false then
 			ply.keypressed = true
@@ -450,6 +458,7 @@ hook.Add("Player Think", "loot-fellows",function(ply)
         ply.keypressed = false
     end
 end)
+
 
 --// Prop inventory example
 --[[
