@@ -39,7 +39,7 @@ local blacklist = {
 local allowedPrefix = {
     ["ttt"] = true, ["hmcd"] = true, ["mu"] = true, ["ze"] = false,
     ["zs"] = true, ["tdm"] = true, ["zb"] = false, ["zbattle"] = false,
-    ["gm"] = true, ["ph"] = true, ["cs"] = true, ["de"] = true
+    ["gm"] = true, ["ph"] = true, ["cs"] = false, ["de"] = false
 }
 
 local prefixWeights = {
