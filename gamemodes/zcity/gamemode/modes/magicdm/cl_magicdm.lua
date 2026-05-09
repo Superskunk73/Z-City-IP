@@ -18,6 +18,7 @@ function MODE:HUDPaint()
 	local fade = math.Clamp(zb.ROUND_START + 8 - CurTime(), 0, 1)
 
 	draw.SimpleText("Homicide | Magic DM", "ZB_HomicideMediumLarge", sw * 0.5, sh * 0.1, Color(0, 162, 255, 255 * fade), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+	draw.SimpleText("Press H to learn how to use magic", "ZB_HomicideMedium", sw * 0.5, sh * 0.16, Color(220, 240, 255, 255 * fade), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 	local colorRole = fighter.color1
 	colorRole.a = 255 * fade
 	draw.SimpleText("You are a " .. fighter.name, "ZB_HomicideMediumLarge", sw * 0.5, sh * 0.5, colorRole, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
