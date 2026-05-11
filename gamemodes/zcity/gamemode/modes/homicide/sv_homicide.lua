@@ -689,7 +689,6 @@ function MODE:Intermission()
 		 traitors_needed = 1
 	end
 	
-	local traitors_needed = 1
 	local secondTraitorMinPlayers = 13
 
 	if(MODE.ShouldStartRoleRound())then
