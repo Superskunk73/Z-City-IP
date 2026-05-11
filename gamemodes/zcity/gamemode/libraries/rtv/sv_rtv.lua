@@ -39,7 +39,7 @@ local blacklist = {
 local allowedPrefix = {
     ["ttt"] = true, ["hmcd"] = true, ["mu"] = true, ["ze"] = false,
     ["zs"] = true, ["tdm"] = true, ["zb"] = false, ["zbattle"] = false,
-    ["gm"] = true, ["ph"] = true, ["cs"] = true, ["de"] = true
+    ["gm"] = true, ["ph"] = true, ["cs"] = false, ["de"] = false
 }
 
 local prefixWeights = {
@@ -174,15 +174,13 @@ function zb.EndRTV()
     if endStarted then return end
 
     local winmap = table.GetWinningKey(votes)
-    if not winmap then return end
+    if not winmap then
+		winmap = "random"
+	end
 
     if winmap == "random" then
         winmap = mappull[math.random(#mappull)]
     end
-
-	if not winmap then
-		winmap = "gm_construct"
-	end
 
     local mapFamily = GetMapFamily(winmap)
     
