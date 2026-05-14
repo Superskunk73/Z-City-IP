@@ -285,7 +285,24 @@ MODE.Types.standard = {
 		ply:SetNetVar("Inventory",inv)
 	end,
 	GunManLoot = function(ply)
-		ply:Give("weapon_px4beretta")
+		local gunmanweaponspistol = {
+			"weapon_px4beretta",
+			"weapon_p250",
+			"weapon_m1911",
+			"weapon_hkp7",
+			"weapon_tokarev",
+			"weapon_m70zastavapist",
+			"weapon_ppk",
+			"weapon_vp9hk",
+			"weapon_p99",
+			"weapon_makarov",
+			"weapon_p38,",
+			"weapon_glock26",
+			"weapon_conan357",
+			"weapon_fivsevn",
+		}
+		ply:Give(gunmanweaponspistol[math.random(#gunmanweaponspistol)])
+		//ply:Give("weapon_px4beretta")		
 		ply.organism.recoilmul = 1
 	end,
 	PoliceTime = 220,
@@ -571,10 +588,25 @@ MODE.Types.soe = {
 		ply:SetNetVar("Inventory",inv)
 	end,
 	GunManLoot = function(ply)
-		local gun = ply:Give( ( math.random(1,2) > 1 and "weapon_remington870" ) or "weapon_kar98" )
+		local gunmanweapons = {
+			"weapon_remington870",
+			"weapon_izh18",
+			"weapon_moss500",
+			"weapon_toz194",
+			"weapon_kar98",
+			"weapon_m24remington",
+			"weapon_mosin",
+			"weapon_mp18",
+			"weapon_l42a1",
+		}
+		local gun = ply:Give(gunmanweapons[math.random(#gunmanweapons)])
+		// local gun = ply:Give( ( math.random(1,2) > 1 and "weapon_remington870" ) or "weapon_kar98" )
 		ply.organism.recoilmul = 1.0
-		if gun:GetClass() == "weapon_kar98" then
+		if gun:GetClass() == "weapon_kar98" or "weapon_mosin" then
 			hg.AddAttachmentForce(ply,gun,"optic12")
+		end
+		if ply:HasWeapon("weapon_izh18" or "weapon_mp18") then
+			ply:GiveAmmo(gun:GetMaxClip1() * 5, gun:GetPrimaryAmmoType(), true)
 		end
 		local inv = ply:GetNetVar("Inventory")
 		inv["Weapons"]["hg_sling"] = true
