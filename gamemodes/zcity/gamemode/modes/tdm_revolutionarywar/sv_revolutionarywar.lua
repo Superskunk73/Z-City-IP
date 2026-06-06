@@ -24,6 +24,34 @@ local TEAM_LOADOUTS = {
 local MUSKET_AMMO = 20
 local FLINTLOCK_EXTRA_AMMO = 10
 
+local function GetEntitySpawnPositions(classes)
+    local positions = {}
+
+    for _, className in ipairs(classes) do
+        for _, spawn in ipairs(ents.FindByClass(className)) do
+            positions[#positions + 1] = spawn:GetPos()
+        end
+    end
+
+    return positions
+end
+
+function MODE:GetTeamSpawn()
+    -- Gang Wars and HL2DM both use these paired TDM point groups.
+    local americanSpawns = zb.TranslatePointsToVectors(zb.GetMapPoints("HMCD_TDM_T"))
+    local redcoatSpawns = zb.TranslatePointsToVectors(zb.GetMapPoints("HMCD_TDM_CT"))
+
+    if #americanSpawns == 0 then
+        americanSpawns = GetEntitySpawnPositions({"info_player_terrorist", "info_player_rebel"})
+    end
+
+    if #redcoatSpawns == 0 then
+        redcoatSpawns = GetEntitySpawnPositions({"info_player_counterterrorist", "info_player_combine"})
+    end
+
+    return americanSpawns, redcoatSpawns
+end
+
 function MODE:GiveEquipment()
     timer.Simple(0.1, function()
         for _, ply in player.Iterator() do
