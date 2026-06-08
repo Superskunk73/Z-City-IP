@@ -14,7 +14,7 @@ local TEAM_LOADOUTS = {
         riflemanRole = "German Rifleman",
         gunnerRole = "German Machine Gunner",
         color = Color(75, 90, 65),
-        model = "models/player/dod_german_exp_pm.mdl",
+        playerClass = "ww2_german",
         primaryWeapon = "weapon_mp40",
         machineGun = "weapon_mg34",
     },
@@ -23,7 +23,7 @@ local TEAM_LOADOUTS = {
         riflemanRole = "American Rifleman",
         gunnerRole = "American Machine Gunner",
         color = Color(75, 105, 145),
-        model = "models/player/dod_american_exp_pm.mdl",
+        playerClass = "ww2_american",
         primaryWeapon = "weapon_thompson",
         machineGun = "weapon_m249",
     },
@@ -133,12 +133,8 @@ function MODE:GiveEquipment()
 
             ply:SetSuppressPickupNotices(true)
             ply.noSound = true
-            ply:SetPlayerClass()
+            ply:SetPlayerClass(loadout.playerClass)
 
-            -- WW2 uniforms provide the complete appearance; do not layer saved cosmetics
-            -- (such as backpacks or hats) or unrelated fallback models over them.
-            ply:SetModel(loadout.model)
-            ply:SetNetVar("Accessories", "none")
             zb.GiveRole(ply, isMachineGunner and loadout.gunnerRole or loadout.riflemanRole, loadout.color)
 
             local inventory = ply:GetNetVar("Inventory", {})
