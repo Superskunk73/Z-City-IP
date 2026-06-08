@@ -14,7 +14,7 @@ local TEAM_LOADOUTS = {
         riflemanRole = "German Rifleman",
         gunnerRole = "German Machine Gunner",
         color = Color(75, 90, 65),
-        model = "models/player/dod_german_exp_pm.mdl",
+        playerClass = "ww2_german",
         primaryWeapon = "weapon_mp40",
         machineGun = "weapon_mg34",
     },
@@ -23,23 +23,11 @@ local TEAM_LOADOUTS = {
         riflemanRole = "American Rifleman",
         gunnerRole = "American Machine Gunner",
         color = Color(75, 105, 145),
-        model = "models/player/dod_american_exp_pm.mdl",
+        playerClass = "ww2_american",
         primaryWeapon = "weapon_thompson",
         machineGun = "weapon_m249",
     },
 }
-
-local function GetEntitySpawnPositions(classes)
-    local positions = {}
-
-    for _, className in ipairs(classes) do
-        for _, spawn in ipairs(ents.FindByClass(className)) do
-            positions[#positions + 1] = spawn:GetPos()
-        end
-    end
-
-    return positions
-end
 
 local function GetLivingTeamPlayers(teamIndex)
     local players = {}
@@ -104,14 +92,6 @@ function MODE:GetTeamSpawn()
     local germanSpawns = zb.TranslatePointsToVectors(zb.GetMapPoints("HMCD_TDM_T"))
     local americanSpawns = zb.TranslatePointsToVectors(zb.GetMapPoints("HMCD_TDM_CT"))
 
-    if #germanSpawns == 0 then
-        germanSpawns = GetEntitySpawnPositions({"info_player_terrorist", "info_player_axis", "info_player_rebel"})
-    end
-
-    if #americanSpawns == 0 then
-        americanSpawns = GetEntitySpawnPositions({"info_player_counterterrorist", "info_player_allies", "info_player_combine"})
-    end
-
     return germanSpawns, americanSpawns
 end
 
@@ -133,12 +113,8 @@ function MODE:GiveEquipment()
 
             ply:SetSuppressPickupNotices(true)
             ply.noSound = true
-            ply:SetPlayerClass()
+            ply:SetPlayerClass(loadout.playerClass)
 
-            -- WW2 uniforms provide the complete appearance; do not layer saved cosmetics
-            -- (such as backpacks or hats) or unrelated fallback models over them.
-            ply:SetModel(loadout.model)
-            ply:SetNetVar("Accessories", "none")
             zb.GiveRole(ply, isMachineGunner and loadout.gunnerRole or loadout.riflemanRole, loadout.color)
 
             local inventory = ply:GetNetVar("Inventory", {})
