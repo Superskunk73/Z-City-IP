@@ -1,9 +1,15 @@
 local WW2_CLASSES = {
-    ww2_german = "models/player/dod_german_exp_pm.mdl",
-    ww2_american = "models/player/dod_american_exp_pm.mdl",
+    ww2_german = {
+        model = "models/player/dod_german_exp_pm.mdl",
+        accessories = "none",
+    },
+    ww2_american = {
+        model = "models/player/dod_american_exp_pm.mdl",
+        accessories = {"terrorist_band"},
+    },
 }
 
-local function ResetModelAppearance(ply, model)
+local function ResetModelAppearance(ply, model, accessories)
     ply:SetModel(model)
     ply:SetSkin(0)
     ply:SetSubMaterial()
@@ -15,10 +21,12 @@ local function ResetModelAppearance(ply, model)
         ply:SetBodygroup(bodygroup.id, 0)
     end
 
-    ply:SetNetVar("Accessories", "none")
+    ply:SetNetVar("Accessories", accessories)
 end
 
-local function RegisterWW2Class(name, model)
+local function RegisterWW2Class(name, config)
+    local model = config.model
+    local accessories = config.accessories
     local CLASS = player.RegClass(name)
 
     function CLASS.Off(self)
@@ -30,19 +38,19 @@ local function RegisterWW2Class(name, model)
 
         local appearance = self.CurAppearance or hg.Appearance.GetRandomAppearance()
         appearance.AModel = model
-        appearance.AAttachments = "none"
+        appearance.AAttachments = accessories
         appearance.AClothes = {}
         appearance.ABodygroups = {}
         appearance.AColor = color_white
         self.CurAppearance = appearance
 
-        ResetModelAppearance(self, model)
+        ResetModelAppearance(self, model, accessories)
 
         -- Some model/bodygroup state is rebuilt at the end of the spawn tick.
         -- Reapply the clean WW2 appearance after that work has completed.
         timer.Simple(0, function()
             if not IsValid(self) or self.PlayerClassName ~= name then return end
-            ResetModelAppearance(self, model)
+            ResetModelAppearance(self, model, accessories)
         end)
     end
 
@@ -59,6 +67,6 @@ local function RegisterWW2Class(name, model)
     CLASS.CanUseGestures = true
 end
 
-for name, model in pairs(WW2_CLASSES) do
-    RegisterWW2Class(name, model)
+for name, config in pairs(WW2_CLASSES) do
+    RegisterWW2Class(name, config)
 end
