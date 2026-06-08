@@ -100,17 +100,17 @@ local function FillWeaponAndGiveAmmo(ply, weapon, magazineCount)
     end
 end
 
+local function GetTeamSpawnPositions(entityClass, pointGroup)
+    local spawns = GetEntitySpawnPositions({entityClass})
+    if #spawns > 0 then return spawns end
+
+    -- GWars and standard TDM use these saved HMCD_TDM point groups.
+    return zb.TranslatePointsToVectors(zb.GetMapPoints(pointGroup))
+end
+
 function MODE:GetTeamSpawn()
-    local germanSpawns = zb.TranslatePointsToVectors(zb.GetMapPoints("HMCD_TDM_T"))
-    local americanSpawns = zb.TranslatePointsToVectors(zb.GetMapPoints("HMCD_TDM_CT"))
-
-    if #germanSpawns == 0 then
-        germanSpawns = GetEntitySpawnPositions({"info_player_terrorist", "info_player_axis", "info_player_rebel"})
-    end
-
-    if #americanSpawns == 0 then
-        americanSpawns = GetEntitySpawnPositions({"info_player_counterterrorist", "info_player_allies", "info_player_combine"})
-    end
+    local germanSpawns = GetTeamSpawnPositions("info_player_terrorist", "HMCD_TDM_T")
+    local americanSpawns = GetTeamSpawnPositions("info_player_counterterrorist", "HMCD_TDM_CT")
 
     return germanSpawns, americanSpawns
 end
