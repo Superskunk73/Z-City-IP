@@ -5,7 +5,7 @@ hg.CrashDiagnostics = hg.CrashDiagnostics or {}
 local diagnostics = hg.CrashDiagnostics
 
 local LOG_DIRECTORY = "zcity_crash_diagnostics"
-local CURRENT_LOG = LOG_DIRECTORY .. "/current.jsonl"
+local CURRENT_LOG = LOG_DIRECTORY .. "/current.json"
 local ACTIVE_MARKER = LOG_DIRECTORY .. "/session_active.txt"
 local MAX_LOG_BYTES = 4 * 1024 * 1024
 local MAX_RECENT_EVENTS = 256
@@ -208,7 +208,7 @@ local function rotateOversizedLog()
     if not size or size < MAX_LOG_BYTES then return end
 
     local archiveName = string.format(
-        "%s/oversized_%s.jsonl",
+        "%s/oversized_%s.json",
         LOG_DIRECTORY,
         os.date("%Y%m%d_%H%M%S")
     )
@@ -533,7 +533,7 @@ local function initializeSession()
 
     if file.Exists(ACTIVE_MARKER, "DATA") and file.Exists(CURRENT_LOG, "DATA") then
         local archiveName = string.format(
-            "%s/unclean_%s.jsonl",
+            "%s/unclean_%s.json",
             LOG_DIRECTORY,
             os.date("%Y%m%d_%H%M%S")
         )
@@ -633,6 +633,7 @@ concommand.Add("hg_crash_diagnostics_status", function(ply)
         enabled = recordingEnabled,
         collision_diagnostics_enabled = collisionDiagnosticsEnabled:GetBool(),
         data_path = "data/" .. CURRENT_LOG,
+        log_format = "json_lines",
         log_exists = file.Exists(CURRENT_LOG, "DATA"),
         log_size_bytes = file.Size(CURRENT_LOG, "DATA"),
         active_marker_exists = file.Exists(ACTIVE_MARKER, "DATA"),
@@ -656,7 +657,7 @@ concommand.Add("hg_crash_diagnostics_dump", function(ply)
     if not canUseCommand(ply) then return end
 
     diagnostics.Event("manual", "diagnostic_dump", nil, true)
-    local destination = string.format("%s/manual_%s.jsonl", LOG_DIRECTORY, os.date("%Y%m%d_%H%M%S"))
+    local destination = string.format("%s/manual_%s.json", LOG_DIRECTORY, os.date("%Y%m%d_%H%M%S"))
     file.Write(destination, file.Read(CURRENT_LOG, "DATA") or "")
 
     local message = "[Z-City Diagnostics] Wrote data/" .. destination

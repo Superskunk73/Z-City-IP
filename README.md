@@ -28,12 +28,14 @@ A.Bcc -> 1.000
 ## Crash diagnostics
 
 The server keeps a lightweight JSON-lines flight recorder in
-`garrysmod/data/zcity_crash_diagnostics/current.jsonl`. It records periodic Lua
-memory/entity/timer/physics samples, shallow ULib state, player connections,
-collision-rule mutations, crazy-physics events, and the last completed stage of
+`garrysmod/data/zcity_crash_diagnostics/current.json`. The `.json` extension is
+required because Garry's Mod rejects writes to unsupported extensions such as
+`.jsonl`; the contents still use one complete JSON object per line. It records
+periodic Lua memory/entity/timer/physics samples, shallow ULib state, player
+connections, collision-rule mutations, crazy-physics events, and the last completed stage of
 each grenade explosion. If the server exits without a
 clean `ShutDown` hook, the next startup preserves the log as
-`unclean_YYYYMMDD_HHMMSS.jsonl`.
+`unclean_YYYYMMDD_HHMMSS.json`.
 
 Useful server console commands:
 
@@ -49,16 +51,16 @@ Useful server console commands:
   collision-rule call-site recorder while leaving the rest of the flight
   recorder enabled.
 
-At startup, the server console prints either the active `data/.../current.jsonl`
+At startup, the server console prints either the active `data/.../current.json`
 path or a warning explaining why recording is disabled or the file could not be
 created. If the directory contains only `session_active.txt`, check that
 `hg_crash_diagnostics` is `1`, restart the server, and check the console for a
 data-directory permissions error. The marker is created only after
-`current.jsonl` has been created successfully. The JSON log starts with a
+`current.json` has been created successfully. The JSON log starts with a
 `log_created` record because Garry's Mod may not create data files when asked to
 write an empty string.
 
-After a crash, inspect the final records in the newest `unclean_*.jsonl`. A
+After a crash, inspect the final records in the newest `unclean_*.json`. A
 `grenade` record without its matching `*_complete` stage narrows the failure to
 sound networking, blast damage, the physics pass, or shrapnel processing. A
 steady increase in `snapshot.lua_memory_kb`, `snapshot.entities`, or
