@@ -160,8 +160,28 @@ local logCreationWarningPrinted = false
 local function ensureCurrentLog()
     if file.Exists(CURRENT_LOG, "DATA") then return true end
 
-    file.Write(CURRENT_LOG, "")
-    if file.Exists(CURRENT_LOG, "DATA") then return true end
+    file.CreateDir(LOG_DIRECTORY)
+
+    local bootstrap = util.TableToJSON({
+        timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+        realtime = math.Round(RealTime(), 4),
+        category = "diagnostics",
+        event = "log_created",
+        details = {
+            reason = "current_log_missing"
+        }
+    }, false)
+
+    if bootstrap then
+        -- Garry's Mod may not create a data file for an empty string, so write a
+        -- valid JSONL record as the first payload instead of probing with "".
+        file.Write(CURRENT_LOG, bootstrap .. "\n")
+    end
+
+    if file.Exists(CURRENT_LOG, "DATA") then
+        logCreationWarningPrinted = false
+        return true
+    end
 
     if not logCreationWarningPrinted then
         logCreationWarningPrinted = true
@@ -174,6 +194,13 @@ local function ensureCurrentLog()
     end
 
     return false
+end
+
+local function ensureActiveMarker()
+    if file.Exists(ACTIVE_MARKER, "DATA") then return true end
+
+    file.Write(ACTIVE_MARKER, os.date("!%Y-%m-%dT%H:%M:%SZ"))
+    return file.Exists(ACTIVE_MARKER, "DATA")
 end
 
 local function rotateOversizedLog()
@@ -195,6 +222,7 @@ function diagnostics.Event(category, eventName, details, includeSnapshot)
 
     rotateOversizedLog()
     if not ensureCurrentLog() then return end
+    ensureActiveMarker()
 
     local record = {
         timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -581,15 +609,38 @@ local function canUseCommand(ply)
     return not IsValid(ply) or ply:IsSuperAdmin()
 end
 
+local function printCommandMessage(ply, message)
+    if IsValid(ply) then
+        ply:PrintMessage(HUD_PRINTCONSOLE, message .. "\n")
+    else
+        print(message)
+    end
+end
+
 concommand.Add("hg_crash_diagnostics_status", function(ply)
     if not canUseCommand(ply) then return end
 
-    local json = util.TableToJSON(diagnostics.GetSnapshot(), true) or "Unable to encode snapshot"
-    if IsValid(ply) then
-        ply:PrintMessage(HUD_PRINTCONSOLE, json .. "\n")
-    else
-        print(json)
+    local recordingEnabled = enabled:GetBool()
+    local repairedLog = false
+    if recordingEnabled and not file.Exists(CURRENT_LOG, "DATA") then
+        repairedLog = ensureCurrentLog()
     end
+    if recordingEnabled and file.Exists(CURRENT_LOG, "DATA") then
+        ensureActiveMarker()
+    end
+
+    local status = {
+        enabled = recordingEnabled,
+        collision_diagnostics_enabled = collisionDiagnosticsEnabled:GetBool(),
+        data_path = "data/" .. CURRENT_LOG,
+        log_exists = file.Exists(CURRENT_LOG, "DATA"),
+        log_size_bytes = file.Size(CURRENT_LOG, "DATA"),
+        active_marker_exists = file.Exists(ACTIVE_MARKER, "DATA"),
+        repaired_missing_log = repairedLog,
+        snapshot = diagnostics.GetSnapshot()
+    }
+    local json = util.TableToJSON(status, true) or "Unable to encode diagnostics status"
+    printCommandMessage(ply, json)
 end)
 
 concommand.Add("hg_crash_diagnostics_mark", function(ply, _, args)

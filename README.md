@@ -37,7 +37,9 @@ clean `ShutDown` hook, the next startup preserves the log as
 
 Useful server console commands:
 
-- `hg_crash_diagnostics_status` prints the current memory and object snapshot.
+- `hg_crash_diagnostics_status` prints whether recording is enabled, the exact
+  data path, file/marker existence and size, and the current server snapshot. It
+  also attempts to recreate a missing active log when diagnostics are enabled.
 - `hg_crash_diagnostics_mark <message>` adds a timestamped marker before a test.
 - `hg_crash_diagnostics_dump` copies the current log to a timestamped manual log.
 - `hg_crash_diagnostics 0` disables recording; it defaults to enabled.
@@ -51,8 +53,10 @@ At startup, the server console prints either the active `data/.../current.jsonl`
 path or a warning explaining why recording is disabled or the file could not be
 created. If the directory contains only `session_active.txt`, check that
 `hg_crash_diagnostics` is `1`, restart the server, and check the console for a
-data-directory permissions error. The marker is now created only after
-`current.jsonl` has been created successfully.
+data-directory permissions error. The marker is created only after
+`current.jsonl` has been created successfully. The JSON log starts with a
+`log_created` record because Garry's Mod may not create data files when asked to
+write an empty string.
 
 After a crash, inspect the final records in the newest `unclean_*.jsonl`. A
 `grenade` record without its matching `*_complete` stage narrows the failure to
