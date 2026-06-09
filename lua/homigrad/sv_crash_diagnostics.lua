@@ -155,6 +155,27 @@ function diagnostics.GetSnapshot()
     return snapshot
 end
 
+local logCreationWarningPrinted = false
+
+local function ensureCurrentLog()
+    if file.Exists(CURRENT_LOG, "DATA") then return true end
+
+    file.Write(CURRENT_LOG, "")
+    if file.Exists(CURRENT_LOG, "DATA") then return true end
+
+    if not logCreationWarningPrinted then
+        logCreationWarningPrinted = true
+        MsgC(
+            Color(255, 80, 80),
+            "[Z-City Diagnostics] Unable to create data/",
+            CURRENT_LOG,
+            ". Check the server data directory permissions.\n"
+        )
+    end
+
+    return false
+end
+
 local function rotateOversizedLog()
     local size = file.Size(CURRENT_LOG, "DATA")
     if not size or size < MAX_LOG_BYTES then return end
@@ -170,8 +191,10 @@ end
 
 function diagnostics.Event(category, eventName, details, includeSnapshot)
     if not enabled:GetBool() then return end
+    if not ensureCurrentLog() then return end
 
     rotateOversizedLog()
+    if not ensureCurrentLog() then return end
 
     local record = {
         timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -493,8 +516,23 @@ local function initializeSession()
         file.Delete(CURRENT_LOG)
     end
 
+    if not enabled:GetBool() then
+        file.Delete(ACTIVE_MARKER)
+        MsgC(
+            Color(255, 180, 50),
+            "[Z-City Diagnostics] Disabled by hg_crash_diagnostics 0; no JSON log will be written.\n"
+        )
+        return
+    end
+
+    if not ensureCurrentLog() then
+        file.Delete(ACTIVE_MARKER)
+        return
+    end
+
     file.Write(ACTIVE_MARKER, os.date("!%Y-%m-%dT%H:%M:%SZ"))
     diagnostics.Event("lifecycle", "session_start", nil, true)
+    MsgC(Color(120, 220, 120), "[Z-City Diagnostics] Recording to data/", CURRENT_LOG, "\n")
 end
 
 initializeSession()

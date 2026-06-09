@@ -47,6 +47,13 @@ Useful server console commands:
   collision-rule call-site recorder while leaving the rest of the flight
   recorder enabled.
 
+At startup, the server console prints either the active `data/.../current.jsonl`
+path or a warning explaining why recording is disabled or the file could not be
+created. If the directory contains only `session_active.txt`, check that
+`hg_crash_diagnostics` is `1`, restart the server, and check the console for a
+data-directory permissions error. The marker is now created only after
+`current.jsonl` has been created successfully.
+
 After a crash, inspect the final records in the newest `unclean_*.jsonl`. A
 `grenade` record without its matching `*_complete` stage narrows the failure to
 sound networking, blast damage, the physics pass, or shrapnel processing. A
