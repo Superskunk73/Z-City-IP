@@ -29,8 +29,9 @@ A.Bcc -> 1.000
 
 The server keeps a lightweight JSON-lines flight recorder in
 `garrysmod/data/zcity_crash_diagnostics/current.jsonl`. It records periodic Lua
-memory/entity/timer samples, shallow ULib state, player connections, and the
-last completed stage of each grenade explosion. If the server exits without a
+memory/entity/timer/physics samples, shallow ULib state, player connections,
+collision-rule mutations, crazy-physics events, and the last completed stage of
+each grenade explosion. If the server exits without a
 clean `ShutDown` hook, the next startup preserves the log as
 `unclean_YYYYMMDD_HHMMSS.jsonl`.
 
@@ -42,10 +43,24 @@ Useful server console commands:
 - `hg_crash_diagnostics 0` disables recording; it defaults to enabled.
 - `hg_crash_diagnostics_interval 15` controls heartbeat frequency (effective on
   the next server start).
+- `hg_crash_diagnostics_collision_rules 0` disables the more detailed
+  collision-rule call-site recorder while leaving the rest of the flight
+  recorder enabled.
 
 After a crash, inspect the final records in the newest `unclean_*.jsonl`. A
 `grenade` record without its matching `*_complete` stage narrows the failure to
 sound networking, blast damage, the physics pass, or shrapnel processing. A
 steady increase in `snapshot.lua_memory_kb`, `snapshot.entities`, or
-`snapshot.timers` across heartbeats points toward a leak. ULib access changes
-are recorded as `ulib` events with a fresh snapshot.
+`snapshot.timers` across heartbeats points toward a leak. Snapshots also split
+out physics props, ragdolls, constraints, frame/tick timing, and whether physics
+is paused. ULib access changes are recorded as `ulib` events with a fresh
+snapshot.
+
+For warnings such as `prop_physics[305]: Changing collision rules within a
+callback is likely to cause crashes!`, look for a nearby `collision_rules`
+record. It includes the mutation method, Lua call site and stack, callback name
+when detectable, model, position, owner, parent, collision state, and physics
+velocity/mass. Repeated bursts are capped to protect the diagnostic log; an
+`events_throttled` record reports how many duplicate/excess events were omitted.
+`physics` records additionally report physics pause/resume transitions and
+`OnCrazyPhysics` entity state.
